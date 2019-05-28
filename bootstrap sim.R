@@ -9,7 +9,7 @@ freshMarAges <- matrix(NA,ncol=2,nrow=Ncycles)
 freshMarAges[1,] <- c(2,3)
 freshMarAges[2,] <- c(3,2)
 freshMarAges[3,] <- c(2,4)
-freshMarAges[4,] <- c(3,3)
+freshMarAges[4,] <- c(4,2)
 
 lifeCycleNames <- sapply(1:Ncycles,function(x){paste(freshMarAges[x,],collapse=".")})
 dimnames(freshMarAges)=list("Life cycles"=lifeCycleNames,
@@ -17,29 +17,38 @@ dimnames(freshMarAges)=list("Life cycles"=lifeCycleNames,
 
 propAge1 <- rep(1/Ncycles,Ncycles)
 propAge2 <- c(0.1,0.1,0.1,0.7)
-propAge <- rbind(propAge1,propAge2)
+propAge3 <- c(0.1,0.1,0.7,0.1)
+propAge4 <- c(0.1,0.7,0.1,0.1)
+propAge5 <- c(0.7,0.1,0.1,0.1)
+propAge <- rbind(propAge1,propAge2,propAge3,propAge4,propAge5)
 
 recCV <- 0.35
 
-freshSurvMn <- 0.1
-freshSurv <- exp(--log(freshSurvMn)/sum((propAge*freshMarAges[,1])))
+freshSurvMn <- 0.075
 freshSurvCV <- 0.25
-freshRho <- 0.6
+freshRho <- 0.8
 
 marSurvMn <- 0.075
-marSurv <- exp(--log(marSurvMn)/sum((propAge*freshMarAges[,2])))
 marSurvCV <- 0.25
-marRho <- 0.6
+marRho <- 0.8
 
-CR <- 4 # compensation ratio
-N0 <- 100 # equilibrium adults
-propRisk <- 0.25 # fishery closes if population falls below propRisk*N0 
+CR <- 6 # compensation ratio
+N0 <- 1e6 # equilibrium adults
+propRisk <- 0.2 # fishery closes if population falls below propRisk*N0 
 
 risk <- c()
 for(i in 1:nrow(propAge))
 {
-  boot <- replicate(Nboots,LifeCycle(Nyears=Nyears,CR=CR,N0=N0,propAge=propAge[i,],freshMarAges=freshMarAges,recCV=recCV,Ncycles=Ncycles,freshSurv=freshSurv,marSurv=marSurv,freshSurvCV=freshSurvCV,marSurvCV=marSurvCV,freshRho=freshRho,marRho=marRho,lifeCycleNames=lifeCycleNames,propRisk=propRisk))
+  boot <- replicate(Nboots,LifeCycle(Nyears=Nyears,CR=CR,N0=N0,propAge=propAge[i,],freshMarAges=freshMarAges,recCV=recCV,Ncycles=Ncycles,freshSurvMn=freshSurvMn,marSurvMn=marSurvMn,freshSurvCV=freshSurvCV,marSurvCV=marSurvCV,freshRho=freshRho,marRho=marRho,lifeCycleNames=lifeCycleNames,propRisk=propRisk))
   risk[i] <- mean(unlist(boot[which(dimnames(boot)[[1]]=="closureRisk"),]))
 }
 
-risk[2]/risk[1]
+risk/risk[1]
+
+example <- LifeCycle(Nyears=Nyears,CR=CR,N0=N0,propAge=propAge[1,],freshMarAges=freshMarAges,recCV=recCV,Ncycles=Ncycles,freshSurvMn=freshSurvMn,marSurvMn=marSurvMn,freshSurvCV=freshSurvCV,marSurvCV=marSurvCV,freshRho=freshRho,marRho=marRho,lifeCycleNames=lifeCycleNames,propRisk=propRisk)
+
+plot(example$Spawners,example$Recruits,xlab="Spawners",ylab="Recruits")
+matplot(example$SpawnersLC,type="l",xlab="Year",ylab="Spawners",col=c("orange","dodgerblue","grey50","blue"),lty=3,lwd=1.5)
+lines(rowSums(example$SpawnersLC))
+plot(example$freshSurvYr,type="l",ylab="Freshwater survival",xlab="Year")
+plot(example$marSurvYr,type="l",ylab="Marine survival",xlab="Year")

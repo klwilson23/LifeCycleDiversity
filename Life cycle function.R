@@ -1,5 +1,8 @@
-LifeCycle <- function(Nyears=100,CR=4,N0=100,propAge=rep(1/4,4),freshMarAges,recCV=0.25,Ncycles=4,freshSurv=0.7,marSurv=0.5,freshSurvCV=0.1,marSurvCV=0.1,freshRho=0,marRho=0,lifeCycleNames,propRisk)
+LifeCycle <- function(Nyears=100,CR=4,N0=100,propAge=rep(1/4,4),freshMarAges,recCV=0.25,Ncycles=4,freshSurvMn=0.7,marSurvMn=0.5,freshSurvCV=0.1,marSurvCV=0.1,freshRho=0,marRho=0,lifeCycleNames,propRisk)
 {
+  freshSurv <- exp(-(-log(freshSurvMn)/sum((propAge*freshMarAges[,1]))))
+  marSurv <- exp(-(-log(marSurvMn)/sum((propAge*freshMarAges[,2]))))
+  
   popDyn <- array(NA,dim=c(Nyears,Ncycles,max(freshMarAges[,"Freshwater"])+max(freshMarAges[,"Marine"])-1),dimnames=list("Year"=1:Nyears,"Life cycles"=lifeCycleNames,"Age"=1:(max(freshMarAges[,"Freshwater"])+max(freshMarAges[,"Marine"])-1)))
   
   RecruitsLC <- SpawnersLC <- matrix(NA,nrow=Nyears,ncol=Ncycles)

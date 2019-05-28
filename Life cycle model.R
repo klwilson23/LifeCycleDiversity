@@ -1,12 +1,12 @@
 source("Some Functions.R")
 Ncycles <- 4
-Nyears <- 1000
+Nyears <- 100
 
 freshMarAges <- matrix(NA,ncol=2,nrow=Ncycles)
-freshMarAges[1,] <- c(2,3)
-freshMarAges[2,] <- c(3,2)
-freshMarAges[3,] <- c(3,3)
-freshMarAges[4,] <- c(2,4)
+freshMarAges[1,] <- c(1,2)
+freshMarAges[2,] <- c(1,3)
+freshMarAges[3,] <- c(2,3)
+freshMarAges[4,] <- c(2,2)
 
 lifeCycleNames <- sapply(1:Ncycles,function(x){paste(freshMarAges[x,],collapse=".")})
 dimnames(freshMarAges)=list("Life cycles"=lifeCycleNames,
@@ -27,7 +27,7 @@ marSurv <- exp(--log(marSurvMn)/sum((propAge*freshMarAges[,2])))
 marSurvCV <- 0.5
 marRho <- 0.9
 
-popDyn <- array(NA,dim=c(Nyears,Ncycles,max(freshMarAges[,"Freshwater"])+max(freshMarAges[,"Marine"])-1),dimnames=list("Year"=1:Nyears,"Life cycles"=lifeCycleNames,"Age"=1:(max(freshMarAges[,"Freshwater"])+max(freshMarAges[,"Marine"])-1)))
+popDyn <- array(NA,dim=c(Nyears,Ncycles,max(freshMarAges[,"Freshwater"])+max(freshMarAges[,"Marine"])),dimnames=list("Year"=1:Nyears,"Life cycles"=lifeCycleNames,"Age"=1:(max(freshMarAges[,"Freshwater"])+max(freshMarAges[,"Marine"]))))
 
 RecruitsLC <- SpawnersLC <- matrix(NA,nrow=Nyears,ncol=Ncycles)
 
@@ -91,8 +91,8 @@ for(Iyear in 2:Nyears)
 }
 closureRisk <- sum(ifelse(Spawners>(0.1*N0),0,1))/Nyears
 
-plot(Spawners,Recruits)
+plot(Spawners,Recruits,xlab="Spawners",ylab="Recruits (age 1)")
 matplot(SpawnersLC,type="l",xlab="Year",ylab="Spawners",col=c("orange","dodgerblue","grey50","blue"),lty=3,lwd=1.5)
 lines(rowSums(SpawnersLC))
-plot(freshSurvYr,type="l",ylab="Freshwater survival",xlab="Year")
-plot(marSurvYr,type="l",ylab="Marine survival",xlab="Year")
+plot(freshSurvYr,type="l",ylab="Freshwater survival (yr)",xlab="Year")
+plot(marSurvYr,type="l",ylab="Marine survival (yr)",xlab="Year")

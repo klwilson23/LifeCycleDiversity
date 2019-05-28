@@ -6,10 +6,10 @@ Nyears <- 100
 Nboots <- 1000
 
 freshMarAges <- matrix(NA,ncol=2,nrow=Ncycles)
-freshMarAges[1,] <- c(2,3)
-freshMarAges[2,] <- c(3,2)
-freshMarAges[3,] <- c(2,4)
-freshMarAges[4,] <- c(4,2)
+freshMarAges[1,] <- c(1,2)
+freshMarAges[2,] <- c(1,3)
+freshMarAges[3,] <- c(2,3)
+freshMarAges[4,] <- c(2,2)
 
 lifeCycleNames <- sapply(1:Ncycles,function(x){paste(freshMarAges[x,],collapse=".")})
 dimnames(freshMarAges)=list("Life cycles"=lifeCycleNames,
@@ -33,7 +33,7 @@ marSurvCV <- 0.25
 marRho <- 0.8
 
 CR <- 6 # compensation ratio
-N0 <- 1e6 # equilibrium adults
+N0 <- 1e6/0.2 # equilibrium adults
 propRisk <- 0.2 # fishery closes if population falls below propRisk*N0 
 
 risk <- c()

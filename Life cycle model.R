@@ -1,6 +1,10 @@
 source("Some Functions.R")
 Ncycles <- 4
 Nyears <- 100
+CR <- 4 # compensation ratio
+N0 <- 1e3/0.2 # equilibrium adults
+propRisk <- 0.2 # fishery closes if population falls below propRisk*N0 
+
 
 freshMarAges <- matrix(NA,ncol=2,nrow=Ncycles)
 freshMarAges[1,] <- c(1,2)
@@ -13,16 +17,16 @@ dimnames(freshMarAges)=list("Life cycles"=lifeCycleNames,
               "Stage"=c("Freshwater","Marine"))
 
 propAge <- rep(1/Ncycles,Ncycles)
-#propAge <- c(0.1,0.1,0.1,0.7)
+propAge <- c(0.4,0.4,0.1,0.1)
 
-recCV <- 1e-6
+recCV <- 1
 
-freshSurvMn <- 0.1
+freshSurvMn <- 0.5
 freshSurvCV <- 1e-6
 freshRho <- 0.9
 
 marSurvMn <- 0.1
-marSurvCV <- 1e-6
+marSurvCV <- 1
 marRho <- 0.9
 
 freshSurv <- sapply(1:Ncycles,function(x){exp(-(-log(freshSurvMn)/freshMarAges[x,1]))})
@@ -59,6 +63,8 @@ SPR0 <- sum(survivorship*fecundity*recProp) #spawner per recruit
 R0 <- N0/SPR0 # equilibrium recruits
 alpha.R <- CR/SPR0
 beta.R <- -log(alpha.R*SPR0)/(R0*SPR0)
+
+curve(alpha.R*x*exp(beta.R*x),from=0,to=N0,xlab="Spawners",ylab="Recruits")
 
 popDyn[1,,] <- R0*survivorship*recProp
 Spawners[1] <- sum(sapply(1:Ncycles,function(x){popDyn[1,x,sum(freshMarAges[x,])]}))

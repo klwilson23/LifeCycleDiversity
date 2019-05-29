@@ -16,17 +16,17 @@ dimnames(freshMarAges)=list("Life cycles"=lifeCycleNames,
                             "Stage"=c("Freshwater","Marine"))
 
 propAge1 <- rep(1/Ncycles,Ncycles)
-propAge2 <- c(0.7,0.1,0.1,0.1)
-propAge3 <- c(0.1,0.7,0.1,0.1)
-propAge4 <- c(0.1,0.1,0.7,0.1)
-propAge5 <- c(0.1,0.1,0.1,0.7)
+propAge2 <- c(0.4,0.4,0.1,0.1)
+propAge3 <- c(0.1,0.4,0.4,0.1)
+propAge4 <- c(0.1,0.1,0.4,0.4)
+propAge5 <- c(0.4,0.1,0.1,0.4)
 propAge <- rbind(propAge1,propAge2,propAge3,propAge4,propAge5)
 
 recCV <- 1
 
-freshSurvMn <- 0.075
-freshSurvCV <- 0.5
-freshRho <- 0.7
+freshSurvMn <- 0.5
+freshSurvCV <- 1e-6
+freshRho <- 0
 
 marSurvMn <- 0.075
 marSurvCV <- 0.5

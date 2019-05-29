@@ -1,17 +1,17 @@
 LifeCycle <- function(Nyears=100,CR=4,N0=100,propAge=rep(1/4,4),freshMarAges,recCV=0.25,Ncycles=4,freshSurvMn=0.7,marSurvMn=0.5,freshSurvCV=0.1,marSurvCV=0.1,freshRho=0,marRho=0,lifeCycleNames,propRisk)
 {
-  freshSurv <- exp(-(-log(freshSurvMn)/sum((propAge*freshMarAges[,1]))))
-  marSurv <- exp(-(-log(marSurvMn)/sum((propAge*freshMarAges[,2]))))
+  freshSurv <- sapply(1:Ncycles,function(x){exp(-(-log(freshSurvMn)/freshMarAges[x,1]))})
+  marSurv <- sapply(1:Ncycles,function(x){exp(-(-log(marSurvMn)/freshMarAges[x,2]))})
   
   popDyn <- array(NA,dim=c(Nyears,Ncycles,max(freshMarAges[,"Freshwater"])+max(freshMarAges[,"Marine"])),dimnames=list("Year"=1:Nyears,"Life cycles"=lifeCycleNames,"Age"=1:(max(freshMarAges[,"Freshwater"])+max(freshMarAges[,"Marine"]))))
   
   RecruitsLC <- SpawnersLC <- matrix(NA,nrow=Nyears,ncol=Ncycles)
   Spawners <- rep(NA,Nyears)
   Recruits <- rep(NA,Nyears)
-  freshSurvYr <- rep(freshSurv,Nyears)
-  marSurvYr <- rep(marSurv,Nyears)
+  freshSurvYr <- rep(0,Nyears)
+  marSurvYr <- rep(0,Nyears)
   
-  surv.start <- sapply(1:Ncycles,function(x){rep(c(freshSurv,marSurv),times=c(freshMarAges[x,1],freshMarAges[x,2]))})
+  surv.start <- sapply(1:Ncycles,function(x){rep(c(freshSurv[x],marSurv[x]),times=c(freshMarAges[x,1],freshMarAges[x,2]))})
   stage.start <- sapply(1:Ncycles,function(x){rep(c(1,2),times=c(freshMarAges[x,1],freshMarAges[x,2]))})
   survivorship <- survival <- survivalstage <- matrix(0,nrow=Ncycles,ncol=length(popDyn[1,1,]))
   fecundity <- matrix(0,nrow=Ncycles,ncol=length(popDyn[1,1,]))
@@ -43,23 +43,23 @@ LifeCycle <- function(Nyears=100,CR=4,N0=100,propAge=rep(1/4,4),freshMarAges,rec
     SpawnersLC[Iyear,] <- sapply(1:Ncycles,function(x){popDyn[Iyear-1,x,sum(freshMarAges[x,])]})
     
     # calculate time-varying freshwater and marine survival
-    frbetaPars <- get_beta(freshSurv,freshSurvCV)
-    freshSurvYr[Iyear] <- rbeta(1,frbetaPars$alpha,frbetaPars$beta)
+    freshSurvYr[Iyear] <- rnorm(1,0,freshSurvCV)
     freshSurvYr[Iyear] <- (freshRho)*freshSurvYr[Iyear-1]+(1-freshRho)*freshSurvYr[Iyear]
-    marbetaPars <- get_beta(marSurv,marSurvCV)
-    marSurvYr[Iyear] <- rbeta(1,marbetaPars$alpha,marbetaPars$beta)
+    #marbetaPars <- get_beta(marSurv,marSurvCV)
+    marSurvYr[Iyear] <- rnorm(1,0,marSurvCV)
     marSurvYr[Iyear] <- (marRho)*marSurvYr[Iyear-1]+(1-marRho)*marSurvYr[Iyear]
     for(Ilife in 1:Ncycles)
     {
       popDyn[Iyear,Ilife,1] <- Recruits[Iyear]*propAge[Ilife]
       for(Iage in 2:length(popDyn[Iyear,Ilife,]))
       {
-        surv <- ifelse(survivalstage[Ilife,Iage]==1,freshSurvYr[Iyear],
-                       ifelse(survivalstage[Ilife,Iage]==2,marSurvYr[Iyear],0))
+        surv <- ifelse(survivalstage[Ilife,Iage]==1,
+                       exp(log(freshSurv[Ilife]/(1-freshSurv[Ilife]))+freshSurvYr[Iyear])/(1+exp(log(freshSurv[Ilife]/(1-freshSurv[Ilife]))+freshSurvYr[Iyear])),
+                       ifelse(survivalstage[Ilife,Iage]==2,exp(log(marSurv[Ilife]/(1-marSurv[Ilife]))+marSurvYr[Iyear])/(1+exp(log(marSurv[Ilife]/(1-marSurv[Ilife]))+marSurvYr[Iyear])),0))
         popDyn[Iyear,Ilife,Iage] <- popDyn[Iyear-1,Ilife,Iage-1]*surv
       }
     }
   }
   closureRisk <- sum(ifelse(Spawners>(propRisk*N0),0,1))/Nyears
-  return(list("closureRisk"=closureRisk,"RecruitsLC"=RecruitsLC,"SpawnersLC"=SpawnersLC,"survival"=survival,"Spawners"=Spawners,"Recruits"=Recruits,"marSurvYr"=marSurvYr,"freshSurvYr"=freshSurvYr))
+  return(list("closureRisk"=closureRisk,"RecruitsLC"=RecruitsLC,"SpawnersLC"=SpawnersLC,"survival"=survival,"survivorship"=survivorship,"Spawners"=Spawners,"Recruits"=Recruits,"marSurvYr"=marSurvYr,"freshSurvYr"=freshSurvYr))
 }

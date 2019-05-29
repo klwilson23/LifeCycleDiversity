@@ -3,12 +3,12 @@ source("Life cycle function.R")
 
 Ncycles <- 4
 Nyears <- 100
-Nboots <- 10
+Nboots <- 1000
 
 freshMarAges <- matrix(NA,ncol=2,nrow=Ncycles)
-freshMarAges[1,] <- c(2,3)
-freshMarAges[2,] <- c(2,4)
-freshMarAges[3,] <- c(3,4)
+freshMarAges[1,] <- c(1,2)
+freshMarAges[2,] <- c(1,3)
+freshMarAges[3,] <- c(2,3)
 freshMarAges[4,] <- c(2,2)
 
 lifeCycleNames <- sapply(1:Ncycles,function(x){paste(freshMarAges[x,],collapse=".")})
@@ -16,10 +16,10 @@ dimnames(freshMarAges)=list("Life cycles"=lifeCycleNames,
                             "Stage"=c("Freshwater","Marine"))
 
 propAge1 <- rep(1/Ncycles,Ncycles)
-propAge2 <- c(0.1,0.1,0.1,0.7)
-propAge3 <- c(0.1,0.1,0.7,0.1)
-propAge4 <- c(0.1,0.7,0.1,0.1)
-propAge5 <- c(0.7,0.1,0.1,0.1)
+propAge2 <- c(0.7,0.1,0.1,0.1)
+propAge3 <- c(0.1,0.7,0.1,0.1)
+propAge4 <- c(0.1,0.1,0.7,0.1)
+propAge5 <- c(0.1,0.1,0.1,0.7)
 propAge <- rbind(propAge1,propAge2,propAge3,propAge4,propAge5)
 
 recCV <- 1

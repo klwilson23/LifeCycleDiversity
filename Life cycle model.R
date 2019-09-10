@@ -7,12 +7,12 @@ propRisk <- 0.2 # fishery closes if population falls below propRisk*N0
 
 
 freshMarAges <- matrix(NA,ncol=2,nrow=Ncycles)
-freshMarAges[1,] <- c(1,2)
-freshMarAges[2,] <- c(1,3)
-freshMarAges[3,] <- c(2,3)
-freshMarAges[4,] <- c(2,2)
+freshMarAges[1,] <- c(2,2)
+freshMarAges[2,] <- c(2,3)
+freshMarAges[3,] <- c(3,2)
+freshMarAges[4,] <- c(3,3)
 
-lifeCycleNames <- sapply(1:Ncycles,function(x){paste(freshMarAges[x,],collapse=".")})
+lifeCycleNames <- sapply(1:Ncycles,function(x){paste(c(sum(freshMarAges[x,]),freshMarAges[x,1]),collapse=".")})
 dimnames(freshMarAges)=list("Life cycles"=lifeCycleNames,
               "Stage"=c("Freshwater","Marine"))
 

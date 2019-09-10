@@ -8,47 +8,73 @@ Nboots <- 1000
 freshMarAges <- matrix(NA,ncol=2,nrow=Ncycles)
 freshMarAges[1,] <- c(1,2)
 freshMarAges[2,] <- c(1,3)
-freshMarAges[3,] <- c(2,3)
-freshMarAges[4,] <- c(2,2)
+freshMarAges[3,] <- c(2,2)
+freshMarAges[4,] <- c(2,3)
 
-lifeCycleNames <- sapply(1:Ncycles,function(x){paste(freshMarAges[x,],collapse=".")})
+lifeCycleNames <- sapply(1:Ncycles,function(x){paste(c(sum(freshMarAges[x,])+1,freshMarAges[x,1]+1),collapse=".")})
 dimnames(freshMarAges)=list("Life cycles"=lifeCycleNames,
                             "Stage"=c("Freshwater","Marine"))
 
-propAge1 <- rep(1/Ncycles,Ncycles)
-propAge2 <- c(0.4,0.4,0.1,0.1)
-propAge3 <- c(0.1,0.4,0.4,0.1)
-propAge4 <- c(0.1,0.1,0.4,0.4)
-propAge5 <- c(0.4,0.1,0.1,0.4)
-propAge <- rbind(propAge1,propAge2,propAge3,propAge4,propAge5)
+propAge1 <- c(0.545,0.308,0.096,0.051)
+propAge2 <- c(0.459,0.497,0.021,0.023)
+propAge3 <- rep(1/Ncycles,Ncycles)
+propAge <- rbind(propAge1,propAge2,propAge3)
+row.names(propAge) <- c("Historical","Recent","Even")
+recCV <- c(0.486,0.729)
+names(recCV) <- c("Historical","Recent")
+probGood <- c(0.2,0.4,0.8)
+probBad <- c(0.2,0.4,0.8)
 
-recCV <- 1
+marSurvs <- c(0.077,0.0125)
+names(marSurvs) <- c("Good","Bad")
 
-freshSurvMn <- 0.5
+freshSurvMn <- 1
 freshSurvCV <- 1e-6
 freshRho <- 0
 
 marSurvMn <- 0.075
 marSurvCV <- 0.5
-marRho <- 0.7
+marRho <- 0
 
-CR <- 4 # compensation ratio
-N0 <- 1e3/0.2 # equilibrium adults
-propRisk <- 0.2 # fishery closes if population falls below propRisk*N0 
+CR <- 3 # compensation ratio
+N0 <- 1e6 # equilibrium adults
+propRisk <- 0.485 # fishery closes if population falls below propRisk*N0 
 
-risk <- c()
-for(i in 1:nrow(propAge))
+scenarios <- array(NA,dim=c(nrow(propAge),
+                           length(recCV),
+                           length(probGood),
+                           length(probBad)),
+                  dimnames=list("age structure"=row.names(propAge),
+                                "recCV"=names(recCV),
+                                "probGood"=probGood,
+                                "probBad"=probBad))
+nScenarios <- length(scenarios) # how many scenarios are we simulating
+
+counter <- 0
+results <- as.data.frame(expand.grid(dimnames(scenarios)))
+results$probGood <- as.numeric(as.character(results$probGood))
+results$probBad <- as.numeric(as.character(results$probBad))
+results <- data.frame(results,"mn_risk"=rep(NA,nrow(results)),
+                      "LI_risk"=rep(NA,nrow(results)),
+                      "UI_risk"=rep(NA,nrow(results)))
+
+for(i in 1:nrow(results))
 {
-  boot <- replicate(Nboots,LifeCycle(Nyears=Nyears,CR=CR,N0=N0,propAge=propAge[i,],freshMarAges=freshMarAges,recCV=recCV,Ncycles=Ncycles,freshSurvMn=freshSurvMn,marSurvMn=marSurvMn,freshSurvCV=freshSurvCV,marSurvCV=marSurvCV,freshRho=freshRho,marRho=marRho,lifeCycleNames=lifeCycleNames,propRisk=propRisk))
-  risk[i] <- mean(unlist(boot[which(dimnames(boot)[[1]]=="closureRisk"),]))
+  boot <- replicate(Nboots,LifeCycle(Nyears=Nyears,CR=CR,N0=N0,propAge=propAge[results$age.structure[i],],freshMarAges=freshMarAges,recCV=recCV[results$recCV[i]],Ncycles=Ncycles,freshSurvMn=freshSurvMn,marSurvMn=marSurvMn,freshSurvCV=freshSurvCV,marSurvCV=marSurvCV,freshRho=freshRho,marRho=marRho,lifeCycleNames=lifeCycleNames,propRisk=propRisk,marSurv_Scen="g-g",probGood=results$probGood[i],probBad=results$probBad[i],goodSurv=goodSurv,badSurv=badSurv,startProb=startProb))
+  results$mn_risk[i] <- mean(unlist(boot[which(dimnames(boot)[[1]]=="closureRisk"),]))
+  results$LI_risk[i] <- quantile(unlist(boot[which(dimnames(boot)[[1]]=="closureRisk"),]),probs=0.025)
+  results$UI_risk[i] <- quantile(unlist(boot[which(dimnames(boot)[[1]]=="closureRisk"),]),probs=0.975)
 }
 
-risk/risk[1]
+results$portfolio <- results$mn_risk/results[results$age.structure=="Recent" & results$recCV=="Historical" & results$probGood==0.8 & results$probBad==0.8,"mn_risk"]
 
-example <- LifeCycle(Nyears=Nyears,CR=CR,N0=N0,propAge=propAge[1,],freshMarAges=freshMarAges,recCV=recCV,Ncycles=Ncycles,freshSurvMn=freshSurvMn,marSurvMn=marSurvMn,freshSurvCV=freshSurvCV,marSurvCV=marSurvCV,freshRho=freshRho,marRho=marRho,lifeCycleNames=lifeCycleNames,propRisk=propRisk)
+boxplot(UI_risk~age.structure+recCV,data=results)
+
+example <- LifeCycle(Nyears=Nyears,CR=CR,N0=N0,propAge=propAge[results$age.structure[1],],freshMarAges=freshMarAges,recCV=recCV[results$recCV[1]],Ncycles=Ncycles,freshSurvMn=freshSurvMn,marSurvMn=marSurvMn,freshSurvCV=freshSurvCV,marSurvCV=marSurvCV,freshRho=freshRho,marRho=marRho,lifeCycleNames=lifeCycleNames,propRisk=propRisk,marSurv_Scen="g-g",probGood=results$probGood[1],probBad=results$probBad[1],goodSurv=goodSurv,badSurv=badSurv,startProb=startProb)
 
 plot(example$Spawners,example$Recruits,xlab="Spawners",ylab="Recruits")
-matplot(example$SpawnersLC,type="l",xlab="Year",ylab="Spawners",col=c("orange","dodgerblue","grey50","blue"),lty=3,lwd=1.5)
+abline(v=propRisk*N0,lwd=2,col="red")
+matplot(example$SpawnersLC,type="l",xlab="Year",ylab="Spawners",col=c("orange","dodgerblue","grey50","blue"),lty=3,lwd=1.5,ylim=range(c(0,rowSums(example$SpawnersLC))))
 lines(rowSums(example$SpawnersLC))
-plot(example$freshSurvYr,type="l",ylab="Freshwater survival",xlab="Year")
-plot(example$marSurvYr,type="l",ylab="Marine survival",xlab="Year")
+abline(h=propRisk*N0,col="red",lwd=2)
+plot(1:Nyears,marSurvs[example$marSurvYrNm],type="l",ylab="Marine survival",xlab="Year")

@@ -66,9 +66,30 @@ for(i in 1:nrow(results))
   results$UI_risk[i] <- quantile(unlist(boot[which(dimnames(boot)[[1]]=="closureRisk"),]),probs=0.975)
 }
 
-results$portfolio <- results$mn_risk/results[results$age.structure=="Recent" & results$recCV=="Historical" & results$probGood==0.8 & results$probBad==0.8,"mn_risk"]
+results$portfolio <- 1/(results$mn_risk/results[results$age.structure=="Recent" & results$recCV=="Historical" & results$probGood==0.8 & results$probBad==0.8,"mn_risk"])
+?saveRDS
+saveRDS(results,file="results_boot.rds")
+readRDS("results_boot.rds")
+par(mar=c(7.5,5,0.5,0.5))
+boxplot(UI_risk~age.structure+recCV,data=results,ylab="Closure risk (upper 95% CI)",xlab="",names=NA,col=ifelse(results$recCV=="Historical","dodgerblue","tomato"))
+text(1:6, par("usr")[3]-0.1*par("usr")[3],srt = 60, adj= 1, xpd = TRUE,labels = paste(results$age.structure, "Age Str.","\n", results$recCV,"CV",sep=" "), cex=0.75,font=1)
+mtext("Age Structure & Variance",side=1,line=5.5,xpd=NA,cex=1)
 
-boxplot(UI_risk~age.structure+recCV,data=results)
+library(lattice)
+bwplot(UI_risk~age.structure|recCV,data=results,outer=TRUE,col="tomato",xlab="Age Structure",ylab="Closure risk (upper 95% CI)",scales=list(cex=1,col="black"),par.settings = list(box.rectangle = list(fill="tomato")))
+library(ggplot2)
+# http://www.sthda.com/english/wiki/ggplot2-violin-plot-quick-start-guide-r-software-and-data-visualization
+p <- ggplot(data=results, aes(x=age.structure, y=UI_risk, fill=recCV))+ 
+  geom_violin(trim=FALSE)+
+  facet_wrap(~recCV)+
+  geom_jitter(shape=21, bg="grey50",position=position_jitter(0.1),size=2) +
+  scale_fill_brewer(palette="Dark2") +
+  labs(x="Age Structure",y="Closure risk (upper 95% CI)",fill="Variance") +
+  theme_minimal() +
+  theme(legend.position="top")
+p
+ggsave("closure risk.jpeg",units="in",height=5,width=5,dpi=600)
+stat_summary(fun.data=mean_sdl, geom="pointrange", color="red")
 
 example <- LifeCycle(Nyears=Nyears,CR=CR,N0=N0,propAge=propAge[results$age.structure[1],],freshMarAges=freshMarAges,recCV=recCV[results$recCV[1]],Ncycles=Ncycles,freshSurvMn=freshSurvMn,marSurvMn=marSurvMn,freshSurvCV=freshSurvCV,marSurvCV=marSurvCV,freshRho=freshRho,marRho=marRho,lifeCycleNames=lifeCycleNames,propRisk=propRisk,marSurv_Scen="g-g",probGood=results$probGood[1],probBad=results$probBad[1],goodSurv=goodSurv,badSurv=badSurv,startProb=startProb)
 

@@ -86,7 +86,7 @@ p <- ggplot(data=results, aes(x=age.structure, y=UI_risk, fill=recCV))+
   scale_fill_brewer(palette="Dark2") +
   labs(x="Age Structure",y="Closure risk (upper 95% CI)",fill="Variance") +
   theme_minimal() +
-  theme(legend.position="top")
+  theme(legend.position="top",strip.text.x = element_blank())
 p
 ggsave("closure risk.jpeg",units="in",height=5,width=5,dpi=600)
 stat_summary(fun.data=mean_sdl, geom="pointrange", color="red")

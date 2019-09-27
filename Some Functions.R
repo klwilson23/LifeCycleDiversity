@@ -1,3 +1,5 @@
+wrapper <- function(x, ...) paste(strwrap(x, ...), collapse = "\n")
+
 Corner_text <- function(text, location="topright",...) #function to write text to the corner of plots
 {
   legend(location,legend=text, bty ="n", pch=NA,...)

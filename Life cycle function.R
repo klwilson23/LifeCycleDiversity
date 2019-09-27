@@ -2,7 +2,7 @@
 # notes: double-check the bad-bad correlation
 LifeCycle <- function(Nyears=100,CR=4,N0=100,propAge=rep(1/4,4),freshMarAges,recCV=0.25,Ncycles=4,freshSurvMn=0.7,marSurvMn=0.5,freshSurvCV=0.1,marSurvCV=0.1,freshRho=0,marRho=0,lifeCycleNames,propRisk,marSurv_Scen="none",probGood=0.8,probBad=0.2,goodSurv=0.077,badSurv=0.0125,startProb=0.5)
 {
-  marSurvMn <- mean(c(goodSurv,badSurv))
+  marSurvMn <- goodSurv
   freshSurv <- sapply(1:Ncycles,function(x){exp(-(-log(freshSurvMn)/freshMarAges[x,1]))})
   mnfreshSurv <- exp(--log(freshSurvMn)/sum((propAge*freshMarAges[,1])))
   marSurv <- sapply(1:Ncycles,function(x){exp(-(-log(marSurvMn)/freshMarAges[x,2]))})
@@ -47,6 +47,7 @@ LifeCycle <- function(Nyears=100,CR=4,N0=100,propAge=rep(1/4,4),freshMarAges,rec
   }
   
   recProp <- as.vector((t(t(survivorship*fecundity)[t(survivorship*fecundity)!=0]))/sum(survivorship*fecundity))
+  #recProp <- rowSums(survivorship)/sum(survivorship)
   # in order to get the proportions-at-age observed in spawners, we need recruits to be allocated differentially to those proportions-at-age and survivorship vector
   recProp <- (propAge/recProp)/sum((propAge/recProp))
   SPR0 <- sum(survivorship*fecundity*recProp) #spawner per recruit
@@ -59,20 +60,20 @@ LifeCycle <- function(Nyears=100,CR=4,N0=100,propAge=rep(1/4,4),freshMarAges,rec
   }
   
   popDyn[1,,] <- R0*survivorshipStart*recProp
-  Spawners[1] <- sum(sapply(1:Ncycles,function(x){popDyn[1,x,sum(freshMarAges[x,])]}))
+  Spawners[1] <- sum(sapply(1:Ncycles,function(x){popDyn[1,x,sum(freshMarAges[x,])+1]}))
   Recruits[1] <- alpha.R*Spawners[1]*exp(beta.R*Spawners[1])
-  
   RecruitsLC[1,] <- (alpha.R*Spawners[1]*exp(beta.R*Spawners[1]))*recProp
-  SpawnersLC[1,] <- sapply(1:Ncycles,function(x){popDyn[1,x,sum(freshMarAges[x,])]})
+  SpawnersLC[1,] <- sapply(1:Ncycles,function(x){popDyn[1,x,sum(freshMarAges[x,])+1]})
   for(Iyear in 2:Nyears)
   {
     # get recruitment from last years' spawners
-    Spawners[Iyear] <- max(0,sum(sapply(1:Ncycles,function(x){popDyn[Iyear-1,x,sum(freshMarAges[x,])]})))
+    Spawners[Iyear] <- max(0,sum(sapply(1:Ncycles,function(x){popDyn[Iyear-1,x,sum(freshMarAges[x,])+1]})))
+    SpawnersLC[Iyear,] <- sapply(1:Ncycles,function(x){popDyn[Iyear-1,x,sum(freshMarAges[x,])+1]})
+    #recProp <- SpawnersLC[Iyear,]/Spawners[Iyear]
     expectedRec <- alpha.R*Spawners[Iyear]*exp(beta.R*Spawners[Iyear])
     #Recruits[Iyear] <- rlnorm(1,log(expectedRec),recCV)
     Recruits[Iyear] <- pmax(0,rnorm(1,expectedRec,expectedRec*recCV))
     RecruitsLC[Iyear,] <- Recruits[Iyear]*recProp
-    SpawnersLC[Iyear,] <- sapply(1:Ncycles,function(x){popDyn[Iyear-1,x,sum(freshMarAges[x,])]})
     
     # calculate time-varying freshwater and marine survival
     if(marSurv_Scen=="none")
@@ -106,7 +107,7 @@ LifeCycle <- function(Nyears=100,CR=4,N0=100,propAge=rep(1/4,4),freshMarAges,rec
       }
     }
   }
-  closureRisk <- sum(ifelse(Spawners>(propRisk*N0),0,1))/Nyears
+  closureRisk <- sum(ifelse(Spawners>=(propRisk*N0),0,1))/Nyears
   marSurvYrNm <- factor(marSurvYrNm,levels=c("Good","Bad"))
   return(list("closureRisk"=closureRisk,"RecruitsLC"=RecruitsLC,"SpawnersLC"=SpawnersLC,"survival"=survival,"survivorship"=survivorship,"Spawners"=Spawners,"Recruits"=Recruits,"marSurvYr"=exp(log(mnmarSurv/(1-mnmarSurv))+marSurvYr)/(1+exp(log(mnmarSurv/(1-mnmarSurv))+marSurvYr)),"freshSurvYr"=exp(log(mnfreshSurv/(1-mnfreshSurv))+freshSurvYr)/(1+exp(log(mnfreshSurv/(1-mnfreshSurv))+freshSurvYr)),"marSurvYrNm"=marSurvYrNm))
 }
